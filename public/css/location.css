@@ -31,13 +31,39 @@ html {
     margin-bottom: 5vh;
 
 }
+.restaurant-container  {
+    width: 100%;
+    display: grid;
+}
+.restaurant {
+    text-align: center;
+    width: 100%;
+}
+.restaurant-container > p {
+    margin-bottom: 0.05em;
+}
+.restaurant-info-container {
+    overflow: auto;
+}
+
+.restaurant-page{
+    width: 100%;
+    display: inline-block;
+}
+
+.restaurant-info {
+    padding-left: 20%;
+    display: block;
+}
+
 
 .weather {
     height: 35%;
 }
 
 .col{
-    display: flex;        
+    display: flex;    
+    height: 100%;
 }
 .col-p {
     padding: 1vh;

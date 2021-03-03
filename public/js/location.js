@@ -135,7 +135,7 @@ var weatherByLatLng = (lat, lng) => api + "weather/" + lat + "/" + lng;
             success: function(data, textStatus, jqXHR){
 
                 var weatherData = $.parseJSON(data);
-
+                console.log(weatherData)
                  // Generate elements for 3 days forecast
                  for (let index = 0; index < 3; index++) {
 
@@ -143,19 +143,17 @@ var weatherByLatLng = (lat, lng) => api + "weather/" + lat + "/" + lng;
                     var innerDiv = $("<div class='forecast border'></div>");
 
                     // Icons are currently loaded from external site (hotlinking was mentioned to be ok for this site)
-                    innerDiv.append("<img class='weatherIcon' src=https://www.metaweather.com/static/img/weather/"+weatherImages[weatherData.dataseries[index].weather]+".svg>");
+                    //innerDiv.append("<img class='weatherIcon' src=https://www.metaweather.com/static/img/weather/"+weatherImages[weatherData.dataseries[index].weather]+".svg>");
+                    innerDiv.append(`<img class='weatherIcon' src=${window.location.href}images/icons/${weatherData.daily[index].weather[0].icon}.svg>`);
 
                     // Generate content 
                     var weatherInfoDiv = $("<div class='weatherInfo'></div>");
                     var weatherInfoContentDiv = $("<div style='margin:auto'></div>");
-
-                    // parse date of type yyyymmdd
-                    var date = weatherData.dataseries[index].date.toString();
-                    var dateString = date.substring(0,4) + "-" + date.substring(4,6) + "-" + date.substring(6,8);
-
-                    weatherInfoContentDiv.append("<p >"+dateString+" "+weekdays[new Date(dateString).getDay()]+"</p>");
-                    weatherInfoContentDiv.append("<h4>"+weatherNames[weatherData.dataseries[index].weather]+"</h4>");
-                    weatherInfoContentDiv.append("<p>Min "+weatherData.dataseries[index].temp2m.max+"º Max "+weatherData.dataseries[index].temp2m.min+"º</p>");
+                    var dateString = moment(weatherData.daily[index].dt*1000).format("YYYY-MM-DD dddd");//date.getFullYear() + "-" + date.getUTCMonth()+ "-" + date.getUTCDate();
+  
+                    weatherInfoContentDiv.append(`<p >${dateString}</p>`);
+                    weatherInfoContentDiv.append(`<h4>${weatherData.daily[index].weather[0].main}</h4>`);
+                    weatherInfoContentDiv.append(`<p>Max ${Math.round(weatherData.daily[index].temp.max)}º Min ${Math.round(weatherData.daily[index].temp.min)}º</p>`);
 
                     // Append to containers to display content
                     weatherInfoDiv.append(weatherInfoContentDiv);

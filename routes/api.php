@@ -27,3 +27,11 @@ Route::get('location/{number}', [LocationController::class, 'getLocationDataByPo
 // Endpoint for weather search by coordinates
 Route::get('location/weather/{latitude}/{longitude}', [LocationController::class, 'getWeatherData'])
 ->where(['latitude' => '^[-]?([1-8]?\d(\.\d+)?|90(\.0+)?)', 'longitude' => '[-]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$']);
+
+// Endpoint for weather search by coordinates
+Route::get('location/restaurants/{latitude}/{longitude}', [LocationController::class, 'getNearbyRestaurants'])
+->where(['latitude' => '^[-]?([1-8]?\d(\.\d+)?|90(\.0+)?)', 'longitude' => '[-]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$']);
+
+Route::get('location/google/{id}', [LocationController::class, 'getPlaceInformation']);
+
+

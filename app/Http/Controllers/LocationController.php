@@ -4,27 +4,23 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ClientException;
 
 use Cache;
+use Storage;
 
 use App\Models\Location;
 use Exception;
+
+use function _\get;
 
 class LocationController extends Controller
 {
 	// Max times for retrying geodata request
 	const MAX_GEODATA_RETRY = 5;
-	const CACHE_DURATION = 600;
-
-	// Define external APIs
-	const SEVENTIMER_API = "http://7timer.info/bin/civillight.php";
-	const GEOCODEXYZ_API = 'https://geocode.xyz/';
-	const ZIPPOPOTAMUS_API = 'http://api.zippopotam.us/jp/';
-	const GEONAMES_API = 'http://api.geonames.org/';
+	const CACHE_DURATION = 6000;
 
 	// Define error response messages
 	const ERROR_LOCATION_NOT_FOUND = "Location not found!";
@@ -38,69 +34,39 @@ class LocationController extends Controller
 			return response()->json(Cache::get($postnumber));
 		};
 
-
-		$latLng = array();
+		$latLng;
 
 		// Due to some lack of data in a single API (Zippopotamus), use Geonames as a backup if location cant be found from Zippopotamus. 
-		try{
-			$latLng = $this->RequestZippopotamusData($postnumber);
-		}
-		catch(\Exception $e){
-			try{
-				$latLng = $this->RequestGeonamesData($postnumber);
-			}
-			catch(\Exception $e) {
-				// Return response to notify client that location could not be found with given post code.
-				return response(self::ERROR_LOCATION_NOT_FOUND, 204);
-			}
-		}
 
-		$retry = 0;
-		$geocodeData;
+		$location_apis = Storage::disk('local')->get('location_api.json');
+		$location_apis = json_decode($location_apis, true);	
+		$api = $location_apis["google_api"];
 
-		// Free API requests to Geocode seems to get refused sometimes. Retry few times in case of failed request.
-		while($retry < self::MAX_GEODATA_RETRY && !(isset ($geocodeData))) {
-			try {
-				$geocodeData = $this->RequestGeocodeData($latLng);
-			}
-			catch(\Exception $e){
-				// Wait 2 seconds before retrying;
-				sleep(1);
-				$retry ++;
-			}
-		}
-
-		// If max retries were reached, return 503 reponse
-		if($retry == self::MAX_GEODATA_RETRY) {
-			return response(self::ERROR_SERVER_BUSY, 503);
-		}
-
-		// If location data was found, return the data. Otherwise send response for data not found.
-		if(isset ($geocodeData)){
-			$location = new Location($geocodeData, $latLng);
-			Cache::put($postnumber, $location->toJSONArray(), self::CACHE_DURATION);
-			return response()->json($location->toJSONArray());
-		}
-		else {
-			return response(self::ERROR_LOCATION_NOT_FOUND, 204);
-		}
+		
+	
+		return response()->json($this->RequestLocationDataByZip($api,$postnumber)->toArray());
 	}
 
 	// Request weather data from 7Timer
-	public function getWeatherData($lat, $long) {
-
-		if(Cache::get("weather".$lat.$long) !== null) {
-			return response()->json(Cache::get("weather".$lat.$long));
+	public function getWeatherData($lat, $lng) {
+		if(Cache::get("weather".$lat.$lng) !== null) {
+			return response(Cache::get("weather".$lat.$lng));
 		};
 
-		$client = new Client();
 
+		$client = new Client();
+		$api = Storage::disk('local')->get('weather_api.json');
+		$api = json_decode($api, true);	
+
+		
 		try {
 
-			$weatherData = $client->request('GET', self::SEVENTIMER_API."?lon=".$long."&lat=".$lat."&ac=0&unit=metric&output=json&tzshift=0")
+			$url = sprintf(get($api, "apis[0].api"), $lat, $lng);
+			
+			$weatherData = $client->request('GET', $url)
 			->getBody()->getContents();
-			Cache::put("weather".$lat.$long, $weatherData, self::CACHE_DURATION);
-			return response($weatherData);;
+			Cache::put("weather".$lat.$lng, $weatherData, self::CACHE_DURATION);
+			return response($weatherData);
 			
 		}
 		catch (\Exception $e) {
@@ -109,49 +75,51 @@ class LocationController extends Controller
 
 	}
 
-	// Request location data from Geocode.xyz
-	private function RequestGeocodeData($latLng) {
-		try {
-			$client = new Client();
-			return json_decode($client->request('GET', self::GEOCODEXYZ_API.$latLng["lat"].
-			','.$latLng["lng"].'?geoit=json')
-			->getBody()->getContents(), true);
-		}
-		catch(\Exception $e){
-			throw new Exception();
-		}
+	public function getNearbyRestaurants($lat, $lng) {
+		$client = new Client();
+		$location_api = Storage::disk('local')->get('location_api.json');
+		$location_api = json_decode($location_api, true);	
+		$api = $location_api["google_api"];
+		$url = sprintf($api["restaurants_api"], $lat, $lng, $api["api_key"]);
+		$out = new \Symfony\Component\Console\Output\ConsoleOutput();
+		$out->writeln($url);
+		$restaurantsData = $client->request('GET', $url)
+		->getBody()->getContents();
+		return response($restaurantsData);
 	}
 
-	// Request location data by post code from Zippopotamus
-	private function RequestZippopotamusData($postnumber) {
-		try {
-			$client = new Client();
-			$json = json_decode($client->request('GET', self::ZIPPOPOTAMUS_API.$postnumber)
-			->getBody()->getContents(), true);
-			return array(
-				"lat" => $json['places'][0]['latitude'],
-				"lng" => $json['places'][0]['longitude'],
-			);
-		}
-		catch (\Exception $e){
-			throw new Exception();
-		}
-	}
-
-	// Request location data by post code from Geonames
-	private function RequestGeonamesData($postnumber) {
-		try {
-			$client = new Client();
-			$json = json_decode($client->request('GET', self::GEONAMES_API.'postalCodeSearchJSON?postalcode='.$postnumber.'&username=locationtask')
-			->getBody()->getContents(),true);
-			return $latLng = array(
-				"lat" => $json["postalCodes"][0]["lat"],
-				"lng" => $json["postalCodes"][0]["lng"],
-			);
-		}
-		catch (\Exception $e){
-			throw new Exception();
-		}
+	public function getPlaceInformation($id) {
+		if(Cache::get($id) !== null) {
+			return response(Cache::get($id));
+		};
+		$client = new Client();
+		$location_api = Storage::disk('local')->get('location_api.json');
+		$location_api = json_decode($location_api, true);	
+		$api = $location_api["google_api"];
+		$url = sprintf($api["places_api"], $id, $api["api_key"]);
+		
+		$out = new \Symfony\Component\Console\Output\ConsoleOutput();
+		$out->writeln($url);
+		$placeData = $client->request('GET', $url)
+		->getBody()->getContents();
+		Cache::put($id, $placeData, self::CACHE_DURATION);
+		return response($placeData);
 	}
 	
+	// Request location data by post code from external api
+	private function RequestLocationDataByZip($api, $postnumber) {
+		try {
+			$client = new Client();
+			$api_url = sprintf($api["geocode_api"], $postnumber, $api["api_key"]);
+			$json = json_decode($client->request('GET', $api_url)
+			->getBody()->getContents(), true);	
+			return new Location($json);
+		}
+		catch (\Exception $e){
+			#throw new Exception();
+		}
+	}
+
+	
+
 }
