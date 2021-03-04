@@ -83,20 +83,22 @@ import WeatherComponentVue from './WeatherComponent.vue'
             // Handle zip code form submission
             getLocation : function(e) {
                 e.preventDefault();
-                this.loading = true;
                 // Request location data by zip code
-                axios.get("api/location/" + this.zipCode)
-                .then(response => {
-                    this.loading = false;  
-                    if(response.status == 204){
-                        this.error.locationNotFound = true;
-                        this.locationData = {};
-                        setTimeout(() => this.error.locationNotFound = false, 2000);
-                    }
-                    else{
-                        this.locationData = response.data;                           
-                    }
-                });
+                if(this.zipCode != ""){
+                    this.loading = true;
+                    axios.get("api/location/" + this.zipCode)
+                    .then(response => {
+                        this.loading = false;  
+                        if(response.status == 204){
+                            this.error.locationNotFound = true;
+                            this.locationData = {};
+                            setTimeout(() => this.error.locationNotFound = false, 2000);
+                        }
+                        else{
+                            this.locationData = response.data;                           
+                        }
+                    });
+                }
                 
             },
             // Handle pin for map

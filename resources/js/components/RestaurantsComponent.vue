@@ -41,9 +41,16 @@
                     </div>
                 </div>
             </div>
-            <div class="restaurant-alert" v-show="!loading && this.location.locationName && restaurants.length == 0">
+
+            <div class="restaurant-alert" v-show="!error.restaurantNotFound && !loading && this.location.locationName && restaurants.length == 0">
                 <span class="alert alert-warning">No restaurants found near this location.</span>
             </div>
+            <div class="restaurant-alert" v-show="error.restaurantNotFound">
+                <span class="alert alert-warning">Couldn't get restaurant data.</span>
+            </div>
+        
+            <span v-show="error.placeNotFound" class="alert alert-warning">Couldn't get place data.</span>
+            
         </div>
         
     </div>
@@ -62,6 +69,10 @@
                 page : 0,
                 selected : {},
                 loading : false,
+                error : {
+                    restaurantNotFound : false,
+                    placeNotFound : false
+                }
             }
         },
         props  : {
@@ -75,7 +86,13 @@
                 // Get more data for restaurant
                 axios.get("api/location/google/"+restaurant.place_id)
                     .then(response => {
-                        this.selected = response.data.result
+                        if(response.status == 200){
+                            this.selected = response.data.result
+                        }
+                        else {
+                            this.error.placeNotFound = true;
+                            setTimeout(() => this.error.placeNotFound = false, 2000);
+                        }
                 })
             },
             cancelSelection() {
@@ -96,7 +113,12 @@
                     // Find "nearby" restaurants by location
                     axios.get("api/location/restaurants/"+this.location.latitude+"/"+this.location.longitude)
                     .then(response => {
-                        this.restaurants = response.data.results
+                        this.restaurantNotFound = false;
+                        if(response.status == 200){
+                            this.restaurants = response.data.results
+                        } else {
+                            this.error.restaurantNotFound = true;
+                        }
                         this.loading = false;
                     })
                 }

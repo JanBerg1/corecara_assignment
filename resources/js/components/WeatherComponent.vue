@@ -2,7 +2,8 @@
 
     <div class="row weather">
             <div id="weather" class="col col-p">    
-                    <div v-show="!loading && location" v-for="item in weather" class='dailyForecastContainer justify-content-md-center'>
+                    <span v-show="error.getError" class="alert alert-warning">Coudln't get weather data.</span>
+                    <div v-show="!error.getError && !loading && location" v-for="item in weather" class='dailyForecastContainer justify-content-md-center'>
                         <div class='forecast border'>
                             <img class='weatherIcon' :src="item.img"/>
                             <div class='weatherInfo'>
@@ -27,7 +28,10 @@
         data() {
             return {
                 weather : [],
-                loading : false
+                loading : false,
+                error : {
+                    getError : false
+                }
             }
         },
         props : {
@@ -44,14 +48,20 @@
             location : {
                 handler() {    
                     this.loading = true;
+                    this.error.getError = false;
                     // Find weather for the newly detected location
                     axios.get("api/location/weather/" + this.location.latitude + "/" + this.location.longitude).then(response => {
                         this.weather = [];
-                        // Show just 3 of the results (3 day forecast)
-                        for (let index = 0; index < 3; index++) {
-                            response.data[index].img = window.location.href+'images/icons/'+response.data[index].img+'.svg';
-                            this.weather.push(response.data[index]);
+                        if(response.status == 200){ 
+                            // Show just 3 of the results (3 day forecast)
+                            for (let index = 0; index < 3; index++) {
+                                response.data[index].img = window.location.href+'images/icons/'+response.data[index].img+'.svg';
+                                this.weather.push(response.data[index]);
+                            }
                         }
+                        else {
+                                this.error.getError = true;
+                            }
                         this.loading = false;
                     });
                 },

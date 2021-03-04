@@ -24,7 +24,8 @@ class LocationController extends Controller
 	// Define error response messages
 	const ERROR_LOCATION_NOT_FOUND = "Location not found!";
 	const ERROR_WEATHER_DATA_NOT_FOUND = "Cannot fetch weather data.";
-	const ERROR_SERVER_BUSY = "Could not access data, try again in a moment.";
+	const ERROR_NEARBY_RESTAURANT_FETCH_FAILED = "Cannot fetch nearby restaurant data.";
+	const ERROR_PLACE_FETCH_FAILED = "Cannot fetch place data.";
 
 	private Client $client;
 	private $location_apis;
@@ -86,16 +87,27 @@ class LocationController extends Controller
 	// Get restaurants near given latitude and longitude
 	public function getNearbyRestaurants($lat, $lng) {
 		// Build url from api.json and use that to request nearby restaurants
-		$url = sprintf(get($this->location_apis,"google_api.restaurants_api"), $lat, $lng, get($this->location_apis,"google_api.api_key"));
-		$restaurantsData = $this->client->request('GET', $url)->getBody()->getContents();
-		return response($restaurantsData);
+		try {
+			$url = sprintf(get($this->location_apis,"google_api.restaurants_api"), $lat, $lng, get($this->location_apis,"google_api.api_key"));
+			$restaurantsData = $this->client->request('GET', $url)->getBody()->getContents();
+			return response($restaurantsData);
+		}
+		catch (\Exception $e) {
+			return response(self::ERROR_NEARBY_RESTAURANT_FETCH_FAILED, 204);
+		}
 	}
 
 	// Get place informationn from Google Places API by google's place ID
 	public function getPlaceInformation($id) {
 		// Build url from api.json and use that to request place data
-		$url = sprintf(get($this->location_apis,"google_api.places_api"), $id, get($this->location_apis,"google_api.api_key"));
-		$placeData = $this->client->request('GET', $url)->getBody()->getContents();
-		return response($placeData);
+		try {
+			$url = sprintf(get($this->location_apis,"google_api.places_api"), $id, get($this->location_apis,"google_api.api_key"));
+			$placeData = $this->client->request('GET', $url)->getBody()->getContents();
+			return response($placeData);
+		}
+		catch (\Exception $e) {
+			return response(self::ERROR_PLACE_FETCH_FAILED, 204);
+		}
+		
 	}
 }
