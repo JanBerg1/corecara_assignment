@@ -19,8 +19,6 @@ use function _\get;
 
 class LocationController extends Controller
 {
-	// Max times for retrying geodata request
-	const MAX_GEODATA_RETRY = 5;
 	const CACHE_DURATION = 6000;
 
 	// Define error response messages
@@ -41,16 +39,14 @@ class LocationController extends Controller
     // GET for location data using post code
 	public function getLocationDataByPostNumber($postnumber) {
 
-		// Caching is disabled as per the Google API terms of service (No caching allowed basically)
-		/*
-		if(Cache::get($postnumber) !== null) {
-			return response()->json(Cache::get($postnumber));
-		};*/
+		// No caching for Google APIs as per the Google API terms of service (No caching allowed basically)
 		
 		try {
+			// Build url from api.json and use that to request location
 			$api_url = sprintf(get($this->location_apis,"google_api.geocode_api"), $postnumber, get($this->location_apis,"google_api.api_key"));
 			$json = json_decode($this->client->request('GET', $api_url)
 			->getBody()->getContents(), true);
+			// Wrap googles location data to our Location object
 			$location = new Location($json);	
 			return response()->json($location->toArray());
 			}
@@ -61,20 +57,19 @@ class LocationController extends Controller
 
 	// GET for location data using latitude and longitude
 	public function getWeatherData($lat, $lng) {
-
+		
+		// Use cache for weather, is not from Google's API afterall
 		if(Cache::get("weather".$lat.$lng) !== null) {
-			$out = new \Symfony\Component\Console\Output\ConsoleOutput();
-			$out->writeln("HI FROM CACHE!");	
 			return response()->json(Cache::get("weather".$lat.$lng));
 		};
 
 		try {
+			// Build url from api.json and use that to request weather
 			$url = sprintf(get($this->location_apis,"weather_api.api"), $lat, $lng, get($this->location_apis,"weather_api.api_key"));
-			
-			$data = json_decode($this->client->request('GET', $url)
-			->getBody()->getContents(), true);
-			
+			$data = json_decode($this->client->request('GET', $url)->getBody()->getContents(), true);
 			$weatherDataArray = array();
+
+			// Wrap weather data to Weather objects
 			foreach ($data["daily"] as $val){	
 				$weather = new Weather($val);
 			 	array_push($weatherDataArray, $weather->toArray());
@@ -90,23 +85,17 @@ class LocationController extends Controller
 
 	// Get restaurants near given latitude and longitude
 	public function getNearbyRestaurants($lat, $lng) {
+		// Build url from api.json and use that to request nearby restaurants
 		$url = sprintf(get($this->location_apis,"google_api.restaurants_api"), $lat, $lng, get($this->location_apis,"google_api.api_key"));
-		$restaurantsData = $this->client->request('GET', $url)
-		->getBody()->getContents();
+		$restaurantsData = $this->client->request('GET', $url)->getBody()->getContents();
 		return response($restaurantsData);
 	}
 
 	// Get place informationn from Google Places API by google's place ID
 	public function getPlaceInformation($id) {
-		// Caching is disabled as per the Google API terms of service (No caching allowed basically)
-		/* 
-		if(Cache::get($id) !== null) {
-			return response(Cache::get($id));
-		};*/
+		// Build url from api.json and use that to request place data
 		$url = sprintf(get($this->location_apis,"google_api.places_api"), $id, get($this->location_apis,"google_api.api_key"));
-		$placeData = $this->client->request('GET', $url)
-		->getBody()->getContents();
-		//Cache::put($id, $placeData, self::CACHE_DURATION);
+		$placeData = $this->client->request('GET', $url)->getBody()->getContents();
 		return response($placeData);
 	}
 }

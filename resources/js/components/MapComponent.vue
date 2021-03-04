@@ -43,15 +43,19 @@
         watch : {
             pins: {
                 handler() {
+                    // Show pins on the map and center on "them", in this app we only use one pin
                     if(this.pins.length == 0) {
+                        // Center on original location if pins are removed
                         this.center = this.getPosition(this.location);
                     } else {
+                        // Center on the most recently added pin
                         this.center = this.pins[this.pins.length - 1].location;
                     }
                 }
             },
             location: {
                 handler() {
+                    // Center on loaded location
                     this.center= this.getPosition(this.location);
                 }
             }

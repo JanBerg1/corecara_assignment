@@ -37,6 +37,7 @@ class Location  {
         ];
     }
 
+    // Parse name from Google's response
     private function parseGoogleLocationName($name_parts){
         $location_name = array();
         $name_parts = array_slice($name_parts, 1, -1);

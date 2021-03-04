@@ -69,24 +69,31 @@
         },
         methods : {
             selectRestaurant(restaurant) {
+                // Emit to let know that we have selected restaurant to show
                 this.$emit('getLocation', restaurant)
+
+                // Get more data for restaurant
                 axios.get("api/location/google/"+restaurant.place_id)
                     .then(response => {
                         this.selected = response.data.result
                 })
             },
             cancelSelection() {
+                // Emit to let know that we are not looking at the selected restaurant anymore
                 this.$emit('cancelSelection');
                 this.selected = {};
             }
         },
         watch : {
             location : {
-                handler(newval) {
+                handler() {
+                    // Reset restaurants list data when location is changed
                     this.loading = true;
                     this.restaurants = [];
                     this.selected = {};
                     this.page = 0;
+
+                    // Find "nearby" restaurants by location
                     axios.get("api/location/restaurants/"+this.location.latitude+"/"+this.location.longitude)
                     .then(response => {
                         this.restaurants = response.data.results

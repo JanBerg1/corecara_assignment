@@ -40,13 +40,14 @@
                 return i;
             }
         },
-        watch : {
-            
+        watch : {        
             location : {
-                handler(newval) {
+                handler() {    
                     this.loading = true;
+                    // Find weather for the newly detected location
                     axios.get("api/location/weather/" + this.location.latitude + "/" + this.location.longitude).then(response => {
                         this.weather = [];
+                        // Show just 3 of the results (3 day forecast)
                         for (let index = 0; index < 3; index++) {
                             response.data[index].img = window.location.href+'images/icons/'+response.data[index].img+'.svg';
                             this.weather.push(response.data[index]);

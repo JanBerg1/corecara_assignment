@@ -80,9 +80,11 @@ import WeatherComponentVue from './WeatherComponent.vue'
                 }
         },
         methods: {
+            // Handle zip code form submission
             getLocation : function(e) {
                 e.preventDefault();
                 this.loading = true;
+                // Request location data by zip code
                 axios.get("api/location/" + this.zipCode)
                 .then(response => {
                     this.loading = false;  
@@ -97,7 +99,10 @@ import WeatherComponentVue from './WeatherComponent.vue'
                 });
                 
             },
+            // Handle pin for map
+            // Listens the restaurant selection from RestaurantComponent
             pinRestaurant : function(value) {
+                // Map can handle multiple pins, but we only want to show the most recent restaurant selection so empty the list before
                 this.pins = []
                 this.pins.push(
                     {
@@ -108,6 +113,8 @@ import WeatherComponentVue from './WeatherComponent.vue'
                     }
                 )
             },
+           
+            // Listens the restaurant de-selection from RestaurantComponent
             removePin : function(value) {
                 this.pins = []
             }
