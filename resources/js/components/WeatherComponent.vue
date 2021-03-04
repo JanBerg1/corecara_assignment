@@ -11,9 +11,9 @@
                             <img class='weatherIcon' :src="item.img"/>
                             <div class='weatherInfo'>
                                 <div style='margin:auto'>
-                                    <p >{{moment(item)}}</p> 
-                                    <h4>{{item.data.weather[0].main}}</h4>
-                                    <p>Max {{Math.round(item.data.temp.max)}} º Min {{Math.round(item.data.temp.min)}}º</p>
+                                    <p >{{moment(item.date)}}</p> 
+                                    <h4>{{item.weather}}</h4>
+                                    <p>Max {{Math.round(item.max)}} º Min {{Math.round(item.min)}}º</p>
                                 </div>
                             </div>
                         </div>
@@ -41,7 +41,7 @@
         },
         methods: {
             moment: function (item) {
-                let i = moment(item.data.dt*1000).format("YYYY-MM-DD dddd");
+                let i = moment(item*1000).format("YYYY-MM-DD dddd");
                 return i;
             }
         },
@@ -49,16 +49,12 @@
             
             location : {
                 handler(newval) {
-                    console.log("Weather updated: " + newval);
                     this.loading = true;
                     axios.get("api/location/weather/" + this.location.latitude + "/" + this.location.longitude).then(response => {
                         this.weather = [];
                         for (let index = 0; index < 3; index++) {
-                            this.weather.push(
-                                {
-                                    "data" : response.data.daily[index],
-                                    "img" : window.location.href+'images/icons/'+response.data.daily[index].weather[0].icon+'.svg'
-                                });
+                            response.data[index].img = window.location.href+'images/icons/'+response.data[index].img+'.svg';
+                            this.weather.push(response.data[index]);
                         }
                         this.loading = false;
                         this.$forceUpdate(); 

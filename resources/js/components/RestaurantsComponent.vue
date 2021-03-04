@@ -68,6 +68,7 @@
             },
             cancelSelection() {
                 this.$emit('cancelSelection');
+                
                 this.selected = {};
             }
         },
