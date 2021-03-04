@@ -1,0 +1,14 @@
+{
+    "google_api" : {
+        "api_key" : "AIzaSyDEJy0YymYo1ejNbzyA8ivWh1r4Ukdev48",
+        "geocode_api" : "https://maps.googleapis.com/maps/api/geocode/json?&address=%s&key=%s",
+        "restaurants_api" : "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%s,%s&radius=1500&type=restaurant&key=%s",
+        "places_api" : "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&key=%s"
+    },
+    "weather_api" :
+    {
+        "api_key" : "b3fed6e68f3bd2926121b40490d5d894",
+        "api" : "https://api.openweathermap.org/data/2.5/onecall?lat=%s&lon=%s&exclude=minutely,hourly&units=metric&appid=%s"
+    }      
+}
+
