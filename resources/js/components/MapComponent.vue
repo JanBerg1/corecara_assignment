@@ -1,5 +1,5 @@
 <template>
-    <div class="col col-pv" v-if="location.latitude">
+    <div class="col col-pv" v-show="location.latitude">
         <GmapMap
             :center="center"
             :zoom="15"

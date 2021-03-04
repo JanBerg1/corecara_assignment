@@ -37,6 +37,7 @@ html {
 }
 .restaurant {
     text-align: center;
+    overflow: auto;
     width: 100%;
 }
 .restaurant-container > p {
@@ -46,11 +47,16 @@ html {
     overflow: auto;
 }
 
+.restaurant-alert {
+    display: flex;
+}
 .restaurant-page{
     width: 100%;
     display: inline-block;
 }
-
+.btn-restaurant-cancel{
+    height: 30px;
+}
 .restaurant-info {
     padding-left: 20%;
     display: block;

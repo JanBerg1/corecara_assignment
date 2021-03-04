@@ -2,11 +2,7 @@
 
     <div class="row weather">
             <div id="weather" class="col col-p">    
-                <div v-if="loading && location.latitude" id="weatherLoading" class="spinner-border m-5" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-
-                    <div v-if="!loading && location" v-for="item in weather" class='dailyForecastContainer justify-content-md-center'>
+                    <div v-show="!loading && location" v-for="item in weather" class='dailyForecastContainer justify-content-md-center'>
                         <div class='forecast border'>
                             <img class='weatherIcon' :src="item.img"/>
                             <div class='weatherInfo'>
@@ -18,9 +14,7 @@
                             </div>
                         </div>
                     </div>
-               
             </div>
-            
         </div>
 
 </template>
@@ -32,15 +26,16 @@
         },
         data() {
             return {
-                weather : []
+                weather : [],
+                loading : false
             }
         },
         props : {
-            location : Object,
-            loading : Boolean
+            location : Object
         },
         methods: {
             moment: function (item) {
+                // Moment seems to be mutable, so we need to assign it's return value to a variable
                 let i = moment(item*1000).format("YYYY-MM-DD dddd");
                 return i;
             }
@@ -57,7 +52,6 @@
                             this.weather.push(response.data[index]);
                         }
                         this.loading = false;
-                        this.$forceUpdate(); 
                     });
                 },
                 deep : true

@@ -41,9 +41,11 @@ class LocationController extends Controller
     // GET for location data using post code
 	public function getLocationDataByPostNumber($postnumber) {
 
+		// Caching is disabled as per the Google API terms of service (No caching allowed basically)
+		/*
 		if(Cache::get($postnumber) !== null) {
 			return response()->json(Cache::get($postnumber));
-		};
+		};*/
 		
 		try {
 			$api_url = sprintf(get($this->location_apis,"google_api.geocode_api"), $postnumber, get($this->location_apis,"google_api.api_key"));
@@ -57,22 +59,24 @@ class LocationController extends Controller
 		}
 	}
 
-	// Request weather data from 7Timer
+	// GET for location data using latitude and longitude
 	public function getWeatherData($lat, $lng) {
 
 		if(Cache::get("weather".$lat.$lng) !== null) {
-			return response(Cache::get("weather".$lat.$lng));
+			$out = new \Symfony\Component\Console\Output\ConsoleOutput();
+			$out->writeln("HI FROM CACHE!");	
+			return response()->json(Cache::get("weather".$lat.$lng));
 		};
 
 		try {
-			$url = sprintf(get($this->location_apis,"weather_api.api"), $lat, $lng);
-			$out = new \Symfony\Component\Console\Output\ConsoleOutput();
-			$out->writeln($url);	
+			$url = sprintf(get($this->location_apis,"weather_api.api"), $lat, $lng, get($this->location_apis,"weather_api.api_key"));
+			
 			$data = json_decode($this->client->request('GET', $url)
 			->getBody()->getContents(), true);
 			
 			$weatherDataArray = array();
 			foreach ($data["daily"] as $val){	
+				$weather = new Weather($val);
 			 	array_push($weatherDataArray, $weather->toArray());
 			}
 			Cache::put("weather".$lat.$lng, $weatherDataArray, self::CACHE_DURATION);
@@ -84,6 +88,7 @@ class LocationController extends Controller
 
 	}
 
+	// Get restaurants near given latitude and longitude
 	public function getNearbyRestaurants($lat, $lng) {
 		$url = sprintf(get($this->location_apis,"google_api.restaurants_api"), $lat, $lng, get($this->location_apis,"google_api.api_key"));
 		$restaurantsData = $this->client->request('GET', $url)
@@ -91,14 +96,17 @@ class LocationController extends Controller
 		return response($restaurantsData);
 	}
 
+	// Get place informationn from Google Places API by google's place ID
 	public function getPlaceInformation($id) {
+		// Caching is disabled as per the Google API terms of service (No caching allowed basically)
+		/* 
 		if(Cache::get($id) !== null) {
 			return response(Cache::get($id));
-		};
+		};*/
 		$url = sprintf(get($this->location_apis,"google_api.places_api"), $id, get($this->location_apis,"google_api.api_key"));
 		$placeData = $this->client->request('GET', $url)
 		->getBody()->getContents();
-		Cache::put($id, $placeData, self::CACHE_DURATION);
+		//Cache::put($id, $placeData, self::CACHE_DURATION);
 		return response($placeData);
 	}
 }

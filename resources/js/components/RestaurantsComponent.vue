@@ -1,14 +1,20 @@
 <template>
     <div class="col col-pv" >
-        <div class="restaurant-container" v-if="restaurants">     
-            <div class="list-group restaurant-info-container" v-if='selected.name'>
+
+        <div v-show="loading" id="locationLoading" class="spinner-border m-5" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+
+        <div class="restaurant-container">    
+             
+            <div class="list-group restaurant-info-container" v-show='selected.name'>
                 <div class="list-group-item active">
-                    <h5 v-if="selected.name">{{ selected.name }} </h5>
+                    <h5 v-show="selected.name">{{ selected.name }} </h5>
                 </div>
                 
-                <div>
+                <div v-show="selected.formatted_address">
                     <span class="font-weight-bold">Address: </span>
-                    <span class="restaurant-info" v-if="selected.formatted_address">{{ selected.formatted_address }}</span>
+                    <span class="restaurant-info" >{{ selected.formatted_address }}</span>
                 </div>
                 <div v-if="selected.opening_hours">
                     <span  class="font-weight-bold">Hours: </span>
@@ -16,14 +22,14 @@
                         {{ text }}
                     </span>
                 </div>
-                <div v-if="selected.international_phone_number">
+                <div v-show="selected.international_phone_number">
                     <span class="font-weight-bold">Phone: </span>
                     <span class="restaurant-info" >{{ selected.international_phone_number }}</span>
                 </div>
-                <span v-if="selected.name" class="btn btn-primary" v-on:click="cancelSelection()">BACK</span>
             </div>
-           
 
+            <span v-show="selected.name" class="btn-restaurant-cancel btn btn-primary" v-on:click="cancelSelection()">BACK</span>
+    
             <div class="restaurant list-group" v-if="!selected.name && restaurants.length != 0">
                 <div v-on:click="selectRestaurant(restaurant)" class="list-group-item list-group-item-action" v-for="restaurant in restaurants.slice(page*6, page*6+6)">
                     <span>{{ restaurant.name }}</span>
@@ -35,7 +41,11 @@
                     </div>
                 </div>
             </div>
+            <div class="restaurant-alert" v-show="!loading && this.location.locationName && restaurants.length == 0">
+                <span class="alert alert-warning">No restaurants found near this location.</span>
+            </div>
         </div>
+        
     </div>
 </template>
 
@@ -48,9 +58,10 @@
         },
         data(){
             return {
-                restaurants : [],
+                restaurants : Array,
                 page : 0,
-                selected : {}
+                selected : {},
+                loading : false,
             }
         },
         props  : {
@@ -62,26 +73,24 @@
                 axios.get("api/location/google/"+restaurant.place_id)
                     .then(response => {
                         this.selected = response.data.result
-                        console.log(this.selected); 
-                        this.$forceUpdate(); 
                 })
             },
             cancelSelection() {
                 this.$emit('cancelSelection');
-                
                 this.selected = {};
             }
         },
         watch : {
             location : {
                 handler(newval) {
+                    this.loading = true;
                     this.restaurants = [];
                     this.selected = {};
                     this.page = 0;
                     axios.get("api/location/restaurants/"+this.location.latitude+"/"+this.location.longitude)
                     .then(response => {
                         this.restaurants = response.data.results
-                        this.$forceUpdate(); 
+                        this.loading = false;
                     })
                 }
             },

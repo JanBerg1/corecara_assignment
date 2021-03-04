@@ -18,36 +18,40 @@
                             </form>
                         </div>
                     </div>
-                    
-                    <div v-if="error.locationNotFound" class='alert show fade alert-warning'>No location found for post code</div>
+
+                    <div v-show="error.locationNotFound" class='alert show fade alert-warning'>No location found for post code</div>
                     <div class="row">
-                        <div class="col col-p" id="locationNameContainer">
-                            <div v-if="loading" id="locationLoading" class="spinner-border m-5" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                            <h3>{{ locationName }}</h3>
+                        <div v-show="loading" id="locationLoading" class="spinner-border m-5" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <div v-show="!loading" class="col col-p" id="locationNameContainer">
+                            
+                            <h3>{{ locationData.locationName }}</h3>
                         </div>
                     </div>
 
                     <div  class="row">
-                                    <div v-if="!loading && locationData.latitude" class="col">
+                                    <div v-show="!loading && locationData.latitude" class="col">
                                         <h6 id="weatherTitle">3-day forecast</h6>
                                     </div>
                                 </div>
 
-                    <weather-component v-bind:location="locationData" v-bind:loading="loading"></weather-component>
+                    <weather-component v-show="!loading && locationData.latitude" v-bind:location="locationData"></weather-component>
+
                     <div class="row">
-                        <div class="col">
-                            <h6 id="mapTitle" v-if="locationData.latitude"> Map</h6>
+                        <div class="col" v-show="!loading">
+                            <h6 id="mapTitle" v-show="locationData.latitude"> Map</h6>
                         </div>
-                        <div class="col">
-                            <h6 id="infoTitle" v-if="locationData.latitude">Nearby restaurants</h6>
+                        <div class="col" v-show="!loading">
+                            <h6 id="infoTitle" v-show="locationData.latitude">Nearby restaurants (click for info)</h6>
                         </div>
                     </div>
-                    <div class="row mapcontainer">
+
+                    <div v-show="!loading && locationData.latitude" class="row mapcontainer">
                         <map-component v-bind:location="locationData" v-bind:pins="pins"></map-component>
                         <restaurants-component v-on:getLocation="pinRestaurant" v-on:cancelSelection="removePin" v-bind:location="locationData"></restaurants-component>
-                    </div>   
+                    </div>
+
                 </div>   
 </template>
 
@@ -68,7 +72,6 @@ import WeatherComponentVue from './WeatherComponent.vue'
                 return {
                         pins : [],
                         zipCode : "",
-                        locationName : "",
                         locationData : {},
                         loading : false,
                         error : {
@@ -85,12 +88,11 @@ import WeatherComponentVue from './WeatherComponent.vue'
                     this.loading = false;  
                     if(response.status == 204){
                         this.error.locationNotFound = true;
+                        this.locationData = {};
                         setTimeout(() => this.error.locationNotFound = false, 2000);
                     }
                     else{
-                        this.locationData = response.data;
-                        this.locationName = response.data.locationName;
-                           
+                        this.locationData = response.data;                           
                     }
                 });
                 

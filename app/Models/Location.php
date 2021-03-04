@@ -4,7 +4,7 @@ namespace App\Models;
 
 use function _\get;
 
-// "Model" class for wrapping location data from used APIs
+// "Model" class for wrapping location data from used Google API
 class Location  {
 
     private $locationName;
